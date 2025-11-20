@@ -3,7 +3,6 @@ import EditorJS, { OutputData } from '@editorjs/editorjs';
 import Header from '@editorjs/header';
 import List from '@editorjs/list';
 import Paragraph from '@editorjs/paragraph';
-import Checklist from '@editorjs/checklist';
 import Quote from '@editorjs/quote';
 import Warning from '@editorjs/warning';
 import Delimiter from '@editorjs/delimiter';
@@ -92,10 +91,6 @@ export function PageEditor({ content, onChange, readOnly = false }: PageEditorPr
               config: {
                 defaultStyle: 'unordered'
               }
-            },
-            checklist: {
-              class: Checklist,
-              inlineToolbar: true
             },
             quote: {
               class: Quote,
