@@ -8,6 +8,7 @@ import { PasswordPrompt } from '@/components/PasswordPrompt';
 import { Button } from '@/components/ui/button';
 import { Edit } from 'lucide-react';
 import { OnThisPage } from '@/components/OnThisPage';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export function DocPage() {
   const params = useParams();
@@ -18,7 +19,7 @@ export function DocPage() {
   const contentRef = useRef<HTMLDivElement>(null);
 
   const page = storage.getPageBySlugPath(slugPath);
-  
+
   if (!page) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -66,7 +67,7 @@ export function DocPage() {
     <div className="min-h-screen bg-background">
       <div className="max-w-[1400px] mx-auto px-6 py-8">
         <Breadcrumbs pages={breadcrumbs} />
-        
+
         <div className="mb-6">
           <h1 className="text-4xl font-bold mb-2">{page.title}</h1>
           {page.summary && (
@@ -77,9 +78,28 @@ export function DocPage() {
         <div className="flex gap-6">
           {/* Main content area */}
           <div className="flex-1 min-w-0" ref={contentRef}>
-            <div className="prose prose-slate dark:prose-invert max-w-none">
-              <EditorRenderer blocks={page.content.blocks} />
-            </div>
+            {page.viewMode === 'tabbed' && page.tabs ? (
+              <Tabs defaultValue={page.tabs[0]?.id} className="w-full">
+                <TabsList>
+                  {page.tabs.map((tab) => (
+                    <TabsTrigger key={tab.id} value={tab.id}>
+                      {tab.label}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+                {page.tabs.map((tab) => (
+                  <TabsContent key={tab.id} value={tab.id} className="mt-6">
+                    <div className="prose prose-slate dark:prose-invert max-w-none">
+                      <EditorRenderer blocks={tab.content.blocks} />
+                    </div>
+                  </TabsContent>
+                ))}
+              </Tabs>
+            ) : (
+              <div className="prose prose-slate dark:prose-invert max-w-none">
+                <EditorRenderer blocks={page.content.blocks} />
+              </div>
+            )}
           </div>
 
           {/* Right sidebar - On this page navigation */}

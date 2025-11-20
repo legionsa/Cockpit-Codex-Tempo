@@ -10,6 +10,32 @@ export interface EditorJSContent {
   version: string;
 }
 
+export interface TabData {
+  label: string;
+  content: EditorJSContent;
+}
+
+export interface PageTab {
+  id: string;
+  label: string;
+  content: EditorJSContent;
+}
+
+export interface PropDefinition {
+  name: string;
+  type: string;
+  defaultValue?: string;
+  required: boolean;
+  description: string;
+}
+
+export interface CodeExample {
+  title: string;
+  language: string;
+  code: string;
+  description?: string;
+}
+
 export interface Page {
   id: string;
   title: string;
@@ -17,13 +43,39 @@ export interface Page {
   parentId: string | null;
   order: number;
   tags: string[];
+  pageTags?: string[]; // For status tags like Beta, Deprecated
   summary: string;
-  contentType: 'editorjs';
+
+  // View mode: how content is displayed
+  viewMode?: 'default' | 'tabbed';
+
+  // Content for default mode
   content: EditorJSContent;
+
+  // Tabs for tabbed mode
+  tabs?: PageTab[];
+
+  // Legacy fields (deprecated, will be removed)
+  layout?: 'default' | 'tab' | 'iconGallery';
+  icons?: any[];
+  componentData?: {
+    props?: PropDefinition[];
+    examples?: CodeExample[];
+    livePreview?: boolean;
+    importPath?: string;
+  };
+
   status: 'Draft' | 'Published' | 'Archived';
   version: string;
   lastUpdated: string;
-  password?: string; // Optional password protection
+  password?: string; // Legacy - plain text (deprecated)
+  passwordHash?: string; // New - PBKDF2 hashed password
+}
+
+export interface PageTag {
+  label: string;
+  color: string;
+  description: string;
 }
 
 export interface PageTreeNode extends Page {

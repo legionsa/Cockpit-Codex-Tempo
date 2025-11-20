@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LogOut, Plus, Save, Trash2, Eye, FolderPlus } from 'lucide-react';
 import { NavTree } from '@/components/NavTree';
 import { PageEditor } from '@/components/PageEditor';
+import { TabEditor } from '@/components/TabEditor';
 import { useToast } from '@/components/ui/use-toast';
 import { useLocation } from 'react-router-dom';
 import {
@@ -37,6 +38,7 @@ export function AdminDashboard() {
   const [selectedPage, setSelectedPage] = useState<Page | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
   const [pageToDelete, setPageToDelete] = useState<string | null>(null);
 
   useEffect(() => {
@@ -82,40 +84,71 @@ export function AdminDashboard() {
 
     const siblings = storage.getChildPages(parentId);
     const newPage: Page = {
-      id: 'page-' + Date.now(),
+      id: Date.now().toString(),
       title: 'New Page',
-      slug: 'new-page-' + Date.now(),
+      slug: `page-${Date.now()}`,
       parentId,
-      order: siblings.length,
+      order: Date.now(),
       tags: [],
       summary: '',
-      contentType: 'editorjs',
       content: {
         time: Date.now(),
-        blocks: [
-          {
-            type: 'header',
-            data: { text: 'New Page', level: 1 }
-          }
-        ],
+        blocks: [],
         version: '2.29.0'
       },
       status: 'Draft',
       version: '1.0.0',
       lastUpdated: new Date().toISOString()
     };
+
+    storage.savePage(newPage);
+    loadPages();
     setSelectedPage(newPage);
     setIsEditing(true);
+    toast({
+      title: 'Page created',
+      description: 'New page has been created successfully.'
+    });
+  };
+
+  const handleViewModeChange = (viewMode: 'default' | 'tabbed') => {
+    if (!selectedPage) return;
+
+    if (viewMode === 'tabbed' && (!selectedPage.tabs || selectedPage.tabs.length === 0)) {
+      // Create default tab with current content
+      setSelectedPage({
+        ...selectedPage,
+        viewMode,
+        tabs: [
+          {
+            id: 'overview',
+            label: 'Overview',
+            content: selectedPage.content
+          }
+        ]
+      });
+    } else if (viewMode === 'default') {
+      // Keep tabs but switch to default view
+      setSelectedPage({
+        ...selectedPage,
+        viewMode
+      });
+    } else {
+      setSelectedPage({
+        ...selectedPage,
+        viewMode
+      });
+    }
   };
 
   const handleSavePage = () => {
     if (!selectedPage) return;
-    
+
     storage.savePage({
       ...selectedPage,
       lastUpdated: new Date().toISOString()
     });
-    
+
     loadPages();
     toast({
       title: 'Page saved',
@@ -213,15 +246,22 @@ export function AdminDashboard() {
                             <Save className="h-4 w-4 mr-2" />
                             Save
                           </Button>
-                          <Button size="sm" variant="outline" onClick={() => setIsEditing(false)}>
+                          <Button size="sm" variant="outline" onClick={() => {
+                            // Reload page from storage to discard changes
+                            const freshPage = storage.getPageById(selectedPage.id);
+                            if (freshPage) {
+                              setSelectedPage(freshPage);
+                            }
+                            setIsEditing(false);
+                          }}>
                             Cancel
                           </Button>
                         </>
                       ) : (
                         <>
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
+                          <Button
+                            size="sm"
+                            variant="outline"
                             onClick={() => handleCreatePage(selectedPage.id)}
                             disabled={!canAddChild}
                             title={!canAddChild ? 'Maximum nesting depth reached' : 'Add child page'}
@@ -232,9 +272,9 @@ export function AdminDashboard() {
                           <Button size="sm" onClick={() => setIsEditing(true)}>
                             Edit
                           </Button>
-                          <Button 
-                            size="sm" 
-                            variant="destructive" 
+                          <Button
+                            size="sm"
+                            variant="destructive"
                             onClick={() => handleDeletePage(selectedPage.id)}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -250,18 +290,29 @@ export function AdminDashboard() {
                       <TabsTrigger value="content">Content</TabsTrigger>
                       <TabsTrigger value="settings">Settings</TabsTrigger>
                     </TabsList>
-                    
+
                     <TabsContent value="content" className="mt-4">
                       <div className="mb-4 p-3 bg-muted/50 rounded-lg text-sm text-muted-foreground">
                         💡 <strong>Tip:</strong> Use the Tabs tool in the editor to embed tabbed content within your page (like Examples, Code, Usage sections).
                       </div>
-                      <PageEditor
-                        content={selectedPage.content}
-                        onChange={(content) => setSelectedPage({ ...selectedPage, content })}
-                        readOnly={!isEditing}
-                      />
+                      {selectedPage.viewMode === 'tabbed' ? (
+                        <TabEditor
+                          tabs={selectedPage.tabs || []}
+                          activeTabId={activeTab}
+                          onTabsChange={(tabs) => setSelectedPage({ ...selectedPage, tabs })}
+                          onActiveTabChange={setActiveTab}
+                          isEditing={isEditing}
+                        />
+                      ) : (
+                        <PageEditor
+                          key={selectedPage.id}
+                          content={selectedPage.content}
+                          onChange={(content) => setSelectedPage({ ...selectedPage, content })}
+                          readOnly={!isEditing}
+                        />
+                      )}
                     </TabsContent>
-                    
+
                     <TabsContent value="settings" className="mt-4">
                       <div className="space-y-4">
                         <div className="space-y-2">
@@ -334,12 +385,50 @@ export function AdminDashboard() {
                           <Label>Tags (comma-separated)</Label>
                           <Input
                             value={selectedPage.tags.join(', ')}
-                            onChange={(e) => setSelectedPage({ 
-                              ...selectedPage, 
+                            onChange={(e) => setSelectedPage({
+                              ...selectedPage,
                               tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean)
                             })}
                             disabled={!isEditing}
                           />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Page Layout</Label>
+                          <div className="space-y-3">
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="radio"
+                                id="viewMode-default"
+                                name="viewMode"
+                                value="default"
+                                checked={!selectedPage.viewMode || selectedPage.viewMode === 'default'}
+                                onChange={() => handleViewModeChange('default')}
+                                disabled={!isEditing}
+                                className="w-4 h-4"
+                              />
+                              <label htmlFor="viewMode-default" className="text-sm cursor-pointer">
+                                Default (Standard Content)
+                              </label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="radio"
+                                id="viewMode-tabbed"
+                                name="viewMode"
+                                value="tabbed"
+                                checked={selectedPage.viewMode === 'tabbed'}
+                                onChange={() => handleViewModeChange('tabbed')}
+                                disabled={!isEditing}
+                                className="w-4 h-4"
+                              />
+                              <label htmlFor="viewMode-tabbed" className="text-sm cursor-pointer">
+                                Tabbed (Multiple Sections)
+                              </label>
+                            </div>
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Choose how this page content is displayed.
+                          </p>
                         </div>
                         <div className="space-y-2">
                           <Label>Password Protection (optional)</Label>
@@ -347,8 +436,8 @@ export function AdminDashboard() {
                             type="password"
                             placeholder="Leave empty for no password"
                             value={selectedPage.password || ''}
-                            onChange={(e) => setSelectedPage({ 
-                              ...selectedPage, 
+                            onChange={(e) => setSelectedPage({
+                              ...selectedPage,
                               password: e.target.value
                             })}
                             disabled={!isEditing}

@@ -1,10 +1,14 @@
 import React, { useEffect } from 'react';
+import DOMPurify from 'dompurify';
 import { EditorJSBlock } from '@/types/page';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle } from 'lucide-react';
 import { CodeTabs } from '@/components/CodeTabs';
 import { FigmaEmbed } from '@/components/FigmaEmbed';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { PropsTable } from '@/components/component-docs/PropsTable';
+import { ComponentPreview } from '@/components/component-docs/ComponentPreview';
+import { IconGalleryTabs } from '@/components/icon-explorer/IconGalleryTabs';
 import Prism from 'prismjs';
 import 'prismjs/themes/prism-tomorrow.css';
 import 'prismjs/components/prism-javascript';
@@ -68,8 +72,12 @@ export function EditorRenderer({ blocks }: EditorRendererProps) {
         );
 
       case 'paragraph':
+        const sanitizedParagraph = DOMPurify.sanitize(block.data.text, {
+          ALLOWED_TAGS: ['b', 'i', 'u', 'a', 'mark', 'code', 'em', 'strong'],
+          ALLOWED_ATTR: ['href', 'target', 'rel']
+        });
         return (
-          <p key={index} className="mb-4 leading-7" dangerouslySetInnerHTML={{ __html: block.data.text }} />
+          <p key={index} className="mb-4 leading-7" dangerouslySetInnerHTML={{ __html: sanitizedParagraph }} />
         );
 
       case 'list':
@@ -77,18 +85,22 @@ export function EditorRenderer({ blocks }: EditorRendererProps) {
         const listClass = block.data.style === 'ordered' ? 'list-decimal' : 'list-disc';
         return (
           <ListTag key={index} className={`${listClass} ml-6 mb-4 space-y-2`}>
-            {block.data.items.map((item: string, i: number) => (
-              <li key={i} dangerouslySetInnerHTML={{ __html: item }} />
-            ))}
+            {block.data.items.map((item: string, i: number) => {
+              const sanitizedItem = DOMPurify.sanitize(item, {
+                ALLOWED_TAGS: ['b', 'i', 'u', 'a', 'mark', 'code', 'em', 'strong'],
+                ALLOWED_ATTR: ['href', 'target', 'rel']
+              });
+              return <li key={i} dangerouslySetInnerHTML={{ __html: sanitizedItem }} />;
+            })}
           </ListTag>
         );
 
       case 'image':
         return (
           <figure key={index} className="my-6">
-            <img 
-              src={block.data.file?.url || block.data.url} 
-              alt={block.data.caption || ''} 
+            <img
+              src={block.data.file?.url || block.data.url}
+              alt={block.data.caption || ''}
               className="rounded-lg w-full"
             />
             {block.data.caption && (
@@ -156,10 +168,10 @@ export function EditorRenderer({ blocks }: EditorRendererProps) {
           <ul key={index} className="space-y-2 mb-4">
             {block.data.items?.map((item: any, i: number) => (
               <li key={i} className="flex items-start gap-2">
-                <input 
-                  type="checkbox" 
-                  checked={item.checked} 
-                  readOnly 
+                <input
+                  type="checkbox"
+                  checked={item.checked}
+                  readOnly
                   className="mt-1"
                 />
                 <span dangerouslySetInnerHTML={{ __html: item.text }} />
@@ -192,41 +204,13 @@ export function EditorRenderer({ blocks }: EditorRendererProps) {
       case 'delimiter':
         return <hr key={index} className="my-8 border-border" />;
 
-      case 'tabs':
-        // Custom tabs block with theme-aware styling
-        return (
-          <div key={index} className="my-6">
-            <Tabs defaultValue="0" className="w-full">
-              <TabsList className="bg-muted/50 border border-border">
-                {block.data.tabs?.map((tab: any, tabIndex: number) => (
-                  <TabsTrigger 
-                    key={tabIndex} 
-                    value={tabIndex.toString()}
-                    className="data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
-                  >
-                    {tab.name}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-              {block.data.tabs?.map((tab: any, tabIndex: number) => (
-                <TabsContent key={tabIndex} value={tabIndex.toString()}>
-                  <div 
-                    className="p-4 border border-border rounded-lg bg-card text-card-foreground"
-                    dangerouslySetInnerHTML={{ __html: tab.content }}
-                  />
-                </TabsContent>
-              ))}
-            </Tabs>
-          </div>
-        );
-
       case 'icon':
         return (
           <div key={index} className="inline-flex items-center gap-2 my-2">
-            <div 
+            <div
               className="inline-block"
-              style={{ 
-                width: `${block.data.size || 24}px`, 
+              style={{
+                width: `${block.data.size || 24}px`,
                 height: `${block.data.size || 24}px`,
                 color: block.data.color || 'currentColor'
               }}
@@ -239,6 +223,36 @@ export function EditorRenderer({ blocks }: EditorRendererProps) {
                 {block.data.name}
               </span>
             )}
+          </div>
+        );
+
+      case 'componentProps':
+        return (
+          <div key={index} className="my-6">
+            <PropsTable props={block.data.props || []} />
+          </div>
+        );
+
+      case 'codeExample':
+        return (
+          <div key={index} className="my-6">
+            <ComponentPreview
+              examples={block.data.examples || []}
+              importPath={block.data.importPath}
+            />
+          </div>
+        );
+
+      case 'gallery':
+        return (
+          <div key={index} className="my-6">
+            <IconGalleryTabs
+              tabs={block.data.items?.length > 0 ? [{
+                label: 'All',
+                filter: 'all',
+                icons: block.data.items
+              }] : []}
+            />
           </div>
         );
 

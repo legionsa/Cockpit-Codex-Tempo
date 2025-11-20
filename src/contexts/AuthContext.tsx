@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { storage } from '@/lib/storage';
+import { db } from '@/lib/indexedDB';
+import { hashPassword, verifyPassword, createSession, isSessionValid } from '@/lib/crypto';
 
 interface AuthContextType {
   isAuthenticated: boolean;
@@ -9,43 +10,85 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const SESSION_DURATION = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
-
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
+  // Check session on mount
   useEffect(() => {
-    const token = storage.getAuthToken();
-    const tokenExpiry = storage.getAuthTokenExpiry();
-    
-    if (token && tokenExpiry) {
-      const now = Date.now();
-      if (now < parseInt(tokenExpiry)) {
-        setIsAuthenticated(true);
-      } else {
-        // Token expired, clear it
-        storage.clearAuthToken();
-        setIsAuthenticated(false);
-      }
-    }
+    checkSession();
   }, []);
 
-  const login = async (username: string, password: string): Promise<boolean> => {
-    // Simple mock authentication - in production use bcrypt
-    if (username === 'admin' && password === 'admin') {
-      const token = 'mock-token-' + Date.now();
-      const expiry = Date.now() + SESSION_DURATION;
-      storage.setAuthToken(token, expiry.toString());
-      setIsAuthenticated(true);
-      return true;
+  const checkSession = async () => {
+    try {
+      const session = await db.getSetting('current_session');
+      if (session && isSessionValid(session)) {
+        setIsAuthenticated(true);
+      } else {
+        // Clear expired session
+        await db.deleteSetting('current_session');
+        setIsAuthenticated(false);
+      }
+    } catch (error) {
+      console.error('Session check error:', error);
+      setIsAuthenticated(false);
+    } finally {
+      setIsLoading(false);
     }
-    return false;
   };
 
-  const logout = () => {
-    storage.clearAuthToken();
-    setIsAuthenticated(false);
+  const login = async (username: string, password: string): Promise<boolean> => {
+    try {
+      // Get stored credentials
+      const storedUsername = await db.getSetting<string>('admin_username');
+      const storedPasswordHash = await db.getSetting<string>('admin_password_hash');
+
+      // First time setup OR migration from plain text
+      if (!storedPasswordHash) {
+        console.log('First time setup - creating admin account');
+        const hash = await hashPassword(password);
+        await db.setSetting('admin_username', username);
+        await db.setSetting('admin_password_hash', hash);
+
+        // Create session
+        const session = createSession(username, 24); // 24h expiry
+        await db.setSetting('current_session', session);
+        setIsAuthenticated(true);
+        return true;
+      }
+
+      // Verify credentials
+      const usernameMatch = username === storedUsername;
+      const passwordMatch = await verifyPassword(password, storedPasswordHash);
+
+      if (usernameMatch && passwordMatch) {
+        // Create new session
+        const session = createSession(username, 24); // 24h expiry
+        await db.setSetting('current_session', session);
+        setIsAuthenticated(true);
+        return true;
+      }
+
+      return false;
+    } catch (error) {
+      console.error('Login error:', error);
+      return false;
+    }
   };
+
+  const logout = async () => {
+    try {
+      await db.deleteSetting('current_session');
+      setIsAuthenticated(false);
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
+  // Show loading state briefly during initial check
+  if (isLoading) {
+    return null; // or a loading spinner
+  }
 
   return (
     <AuthContext.Provider value={{ isAuthenticated, login, logout }}>

@@ -8,7 +8,14 @@ const STORAGE_KEYS = {
   USERS: 'cds_users',
   AUTH_TOKEN: 'cds_auth_token',
   AUTH_TOKEN_EXPIRY: 'cds_auth_token_expiry',
+  TAGS: 'cds_tags',
 };
+
+const INITIAL_TAGS = [
+  { label: "Beta", color: "#4f46e5", description: "Still experimental" },
+  { label: "Deprecated", color: "#b91c1c", description: "Use successor component" },
+  { label: "Caution", color: "#f59e0b", description: "Requires special access" }
+];
 
 // Initialize with sample data
 const INITIAL_PAGES: Page[] = [
@@ -20,7 +27,7 @@ const INITIAL_PAGES: Page[] = [
     order: 0,
     tags: ['home'],
     summary: 'Welcome to Cockpit Design System',
-    contentType: 'editorjs',
+
     content: {
       time: Date.now(),
       blocks: [
@@ -47,7 +54,7 @@ const INITIAL_PAGES: Page[] = [
     order: 1,
     tags: ['foundations'],
     summary: 'Core design principles and tokens',
-    contentType: 'editorjs',
+
     content: {
       time: Date.now(),
       blocks: [
@@ -74,7 +81,7 @@ const INITIAL_PAGES: Page[] = [
     order: 0,
     tags: ['color', 'tokens'],
     summary: 'Color palette and semantic tokens',
-    contentType: 'editorjs',
+
     content: {
       time: Date.now(),
       blocks: [
@@ -101,7 +108,7 @@ const INITIAL_PAGES: Page[] = [
     order: 2,
     tags: ['components'],
     summary: 'UI component library',
-    contentType: 'editorjs',
+
     content: {
       time: Date.now(),
       blocks: [
@@ -116,6 +123,179 @@ const INITIAL_PAGES: Page[] = [
       ],
       version: '2.29.0'
     },
+    status: 'Published',
+    version: '1.0.0',
+    lastUpdated: new Date().toISOString()
+  },
+  {
+    id: 'components-button',
+    title: 'Button',
+    slug: 'button',
+    parentId: 'components',
+    order: 0,
+    tags: ['component', 'interactive'],
+    pageTags: ['Stable'],
+    summary: 'A versatile button component with multiple variants and sizes',
+    viewMode: 'tabbed',
+    content: {
+      time: Date.now(),
+      blocks: [],
+      version: '2.29.0'
+    },
+    tabs: [
+      {
+        id: 'overview',
+        label: 'Overview',
+        content: {
+          time: Date.now(),
+          blocks: [
+            {
+              type: 'header',
+              data: { text: 'Button Component', level: 1 }
+            },
+            {
+              type: 'paragraph',
+              data: { text: 'The Button component is a fundamental building block for user interactions. It supports multiple variants, sizes, and states to fit various use cases throughout your application.' }
+            },
+            {
+              type: 'header',
+              data: { text: 'When to use', level: 2 }
+            },
+            {
+              type: 'list',
+              data: {
+                style: 'unordered',
+                items: [
+                  'Primary actions (submit forms, confirm dialogs)',
+                  'Secondary actions (cancel, go back)',
+                  'Navigation (links styled as buttons)',
+                  'Destructive actions (delete, remove)'
+                ]
+              }
+            }
+          ],
+          version: '2.29.0'
+        }
+      },
+      {
+        id: 'props',
+        label: 'Props',
+        content: {
+          time: Date.now(),
+          blocks: [
+            {
+              type: 'header',
+              data: { text: 'Component API', level: 2 }
+            },
+            {
+              type: 'paragraph',
+              data: { text: 'Props and configuration options for this component.' }
+            },
+            {
+              type: 'componentProps',
+              data: {
+                props: [
+                  {
+                    name: 'variant',
+                    type: '"default" | "destructive" | "outline" | "secondary" | "ghost" | "link"',
+                    defaultValue: '"default"',
+                    required: false,
+                    description: 'The visual style variant of the button'
+                  },
+                  {
+                    name: 'size',
+                    type: '"default" | "sm" | "lg" | "icon"',
+                    defaultValue: '"default"',
+                    required: false,
+                    description: 'The size of the button'
+                  },
+                  {
+                    name: 'disabled',
+                    type: 'boolean',
+                    defaultValue: 'false',
+                    required: false,
+                    description: 'Whether the button is disabled'
+                  },
+                  {
+                    name: 'onClick',
+                    type: '() => void',
+                    required: false,
+                    description: 'Click handler function'
+                  }
+                ]
+              }
+            }
+          ],
+          version: '2.29.0'
+        }
+      },
+      {
+        id: 'examples',
+        label: 'Examples',
+        content: {
+          time: Date.now(),
+          blocks: [
+            {
+              type: 'header',
+              data: { text: 'Code Examples', level: 2 }
+            },
+            {
+              type: 'paragraph',
+              data: { text: 'Learn how to use this component with practical examples.' }
+            },
+            {
+              type: 'codeExample',
+              data: {
+                importPath: "import { Button } from '@/components/ui/button';",
+                examples: [
+                  {
+                    title: 'Basic Usage',
+                    language: 'tsx',
+                    code: `<Button>Click me</Button>`,
+                    description: 'A simple button with default styling'
+                  },
+                  {
+                    title: 'Variants',
+                    language: 'tsx',
+                    code: `<div className="flex gap-2">
+  <Button variant="default">Default</Button>
+  <Button variant="destructive">Destructive</Button>
+  <Button variant="outline">Outline</Button>
+  <Button variant="secondary">Secondary</Button>
+  <Button variant="ghost">Ghost</Button>
+  <Button variant="link">Link</Button>
+</div>`,
+                    description: 'Different visual variants for various contexts'
+                  },
+                  {
+                    title: 'Sizes',
+                    language: 'tsx',
+                    code: `<div className="flex items-center gap-2">
+  <Button size="sm">Small</Button>
+  <Button size="default">Default</Button>
+  <Button size="lg">Large</Button>
+</div>`,
+                    description: 'Available size options'
+                  },
+                  {
+                    title: 'With Icons',
+                    language: 'tsx',
+                    code: `import { Mail } from 'lucide-react';
+
+<Button>
+  <Mail className="mr-2 h-4 w-4" />
+  Send Email
+</Button>`,
+                    description: 'Buttons with icons for better visual communication'
+                  }
+                ]
+              }
+            }
+          ],
+          version: '2.29.0'
+        }
+      }
+    ],
     status: 'Published',
     version: '1.0.0',
     lastUpdated: new Date().toISOString()
@@ -191,7 +371,7 @@ export const storage = {
   buildPageTree(): PageTreeNode[] {
     const pages = this.getPages();
     const pageMap = new Map<string, PageTreeNode>();
-    
+
     // Initialize all pages as tree nodes
     pages.forEach(page => {
       pageMap.set(page.id, { ...page, children: [], depth: 0 });
@@ -199,10 +379,10 @@ export const storage = {
 
     // Build parent-child relationships
     const rootNodes: PageTreeNode[] = [];
-    
+
     pages.forEach(page => {
       const node = pageMap.get(page.id)!;
-      
+
       if (page.parentId === null) {
         rootNodes.push(node);
       } else {
@@ -219,7 +399,7 @@ export const storage = {
       nodes.sort((a, b) => a.order - b.order);
       nodes.forEach(node => sortNodes(node.children));
     };
-    
+
     sortNodes(rootNodes);
     return rootNodes;
   },
@@ -282,5 +462,35 @@ export const storage = {
   clearAuthToken(): void {
     localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
     localStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN_EXPIRY);
+  },
+
+  // Tags
+  getTags(): any[] {
+    const stored = localStorage.getItem(STORAGE_KEYS.TAGS);
+    if (!stored) {
+      this.setTags(INITIAL_TAGS);
+      return INITIAL_TAGS;
+    }
+    return JSON.parse(stored);
+  },
+
+  setTags(tags: any[]): void {
+    localStorage.setItem(STORAGE_KEYS.TAGS, JSON.stringify(tags));
+  },
+
+  saveTag(tag: any): void {
+    const tags = this.getTags();
+    const index = tags.findIndex((t: any) => t.label === tag.label);
+    if (index >= 0) {
+      tags[index] = tag;
+    } else {
+      tags.push(tag);
+    }
+    this.setTags(tags);
+  },
+
+  deleteTag(label: string): void {
+    const tags = this.getTags().filter((t: any) => t.label !== label);
+    this.setTags(tags);
   }
 };
