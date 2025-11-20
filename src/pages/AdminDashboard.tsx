@@ -10,7 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LogOut, Plus, Save, Trash2, Eye, FolderPlus } from 'lucide-react';
+import { LogOut, Plus, Save, Trash2, Eye, FolderPlus, Settings } from 'lucide-react';
 import { NavTree } from '@/components/NavTree';
 import { PageEditor } from '@/components/PageEditor';
 import { TabEditor } from '@/components/TabEditor';
@@ -204,11 +204,15 @@ export function AdminDashboard() {
           <h1 className="text-2xl font-bold">Admin Dashboard</h1>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={handlePreview} disabled={!selectedPage}>
-              <Eye className="h-4 w-4 mr-2" />
+              <Eye className="w-4 h-4 mr-2" />
               Preview
             </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate('/admindash/settings')}>
+              <Settings className="w-4 h-4 mr-2" />
+              Settings
+            </Button>
             <Button variant="outline" size="sm" onClick={handleLogout}>
-              <LogOut className="h-4 w-4 mr-2" />
+              <LogOut className="w-4 h-4 mr-2" />
               Logout
             </Button>
           </div>
