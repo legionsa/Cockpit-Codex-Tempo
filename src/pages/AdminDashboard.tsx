@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { hashPassword } from '@/lib/passwordUtils';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LogOut, Plus, Save, Trash2, Eye, FolderPlus, Settings } from 'lucide-react';
 import { NavTree } from '@/components/NavTree';
@@ -41,6 +42,7 @@ export function AdminDashboard() {
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
+  const [editorTab, setEditorTab] = useState('content'); // For page editor Content/Settings tabs
   const [pageToDelete, setPageToDelete] = useState<string | null>(null);
 
   useEffect(() => {
@@ -66,6 +68,13 @@ export function AdminDashboard() {
       window.history.replaceState({}, document.title);
     }
   }, [location.state]);
+
+  // Reset editor tab to 'content' when page selection changes
+  useEffect(() => {
+    if (selectedPage) {
+      setEditorTab('content');
+    }
+  }, [selectedPage?.id]);
 
   const loadPages = () => {
     setPages(storage.getPages());
@@ -305,7 +314,7 @@ export function AdminDashboard() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <Tabs defaultValue="content" className="w-full">
+                  <Tabs key={selectedPage.id} value={editorTab} onValueChange={setEditorTab} className="w-full">
                     <TabsList>
                       <TabsTrigger value="content">Content</TabsTrigger>
                       <TabsTrigger value="settings">Settings</TabsTrigger>
@@ -411,6 +420,142 @@ export function AdminDashboard() {
                             })}
                             disabled={!isEditing}
                           />
+                        </div>
+
+                        {/* Password Protection */}
+                        <div className="space-y-4 pt-4 border-t">
+                          <div className="space-y-2">
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id="passwordProtected"
+                                checked={selectedPage.passwordProtected || false}
+                                onChange={(e) => {
+                                  setSelectedPage({
+                                    ...selectedPage,
+                                    passwordProtected: e.target.checked,
+                                    passwordHash: e.target.checked ? selectedPage.passwordHash : undefined,
+                                    passwordHint: e.target.checked ? selectedPage.passwordHint : undefined
+                                  });
+                                }}
+                                disabled={!isEditing}
+                                className="h-4 w-4"
+                              />
+                              <Label htmlFor="passwordProtected" className="font-medium cursor-pointer">
+                                Password protect this page
+                              </Label>
+                            </div>
+                            <p className="text-sm text-muted-foreground ml-6">
+                              Require a password to view this page (even from public view)
+                            </p>
+                          </div>
+
+                          {selectedPage.passwordProtected && (
+                            <>
+                              <div className="space-y-2 ml-6">
+                                <Label>Password</Label>
+                                <Input
+                                  type="password"
+                                  placeholder="Enter password"
+                                  onChange={async (e) => {
+                                    if (e.target.value) {
+                                      const hash = await hashPassword(e.target.value);
+                                      setSelectedPage({ ...selectedPage, passwordHash: hash });
+                                    }
+                                  }}
+                                  disabled={!isEditing}
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                  Password will be encrypted before saving
+                                </p>
+                              </div>
+                              <div className="space-y-2 ml-6">
+                                <Label>Password Hint (optional)</Label>
+                                <Input
+                                  value={selectedPage.passwordHint || ''}
+                                  onChange={(e) => setSelectedPage({ ...selectedPage, passwordHint: e.target.value })}
+                                  placeholder="Enter a hint to help users remember the password"
+                                />
+                              </div>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Visibility & Role-Based Access */}
+                        <div className="space-y-4 pt-4 border-t">
+                          <div className="space-y-2">
+                            <Label className="font-medium">Page Visibility</Label>
+                            <p className="text-sm text-muted-foreground">
+                              Control who can access this page
+                            </p>
+                            <div className="space-y-3 mt-3">
+                              <div className="flex items-center space-x-2">
+                                <input
+                                  type="radio"
+                                  id="visibility-public"
+                                  name="visibility"
+                                  checked={(selectedPage.visibility || 'public') === 'public'}
+                                  onChange={() => setSelectedPage({ ...selectedPage, visibility: 'public', requiredRole: undefined })}
+                                  disabled={!isEditing}
+                                  className="h-4 w-4"
+                                />
+                                <Label htmlFor="visibility-public" className="cursor-pointer font-normal">
+                                  Public - Anyone can view
+                                </Label>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <input
+                                  type="radio"
+                                  id="visibility-authenticated"
+                                  name="visibility"
+                                  checked={selectedPage.visibility === 'authenticated'}
+                                  onChange={() => setSelectedPage({ ...selectedPage, visibility: 'authenticated', requiredRole: undefined })}
+                                  disabled={!isEditing}
+                                  className="h-4 w-4"
+                                />
+                                <Label htmlFor="visibility-authenticated" className="cursor-pointer font-normal">
+                                  Authenticated - Requires login
+                                </Label>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <input
+                                  type="radio"
+                                  id="visibility-role-restricted"
+                                  name="visibility"
+                                  checked={selectedPage.visibility === 'role-restricted'}
+                                  onChange={() => setSelectedPage({ ...selectedPage, visibility: 'role-restricted', requiredRole: 'viewer' })}
+                                  disabled={!isEditing}
+                                  className="h-4 w-4"
+                                />
+                                <Label htmlFor="visibility-role-restricted" className="cursor-pointer font-normal">
+                                  Role-Restricted - Requires specific role
+                                </Label>
+                              </div>
+                            </div>
+
+                            {selectedPage.visibility === 'role-restricted' && (
+                              <div className="space-y-2 ml-6 mt-3">
+                                <Label>Required Role (minimum)</Label>
+                                <Select
+                                  value={selectedPage.requiredRole || 'viewer'}
+                                  onValueChange={(value: any) => setSelectedPage({ ...selectedPage, requiredRole: value })}
+                                  disabled={!isEditing}
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="viewer">Viewer (lowest)</SelectItem>
+                                    <SelectItem value="editor">Editor</SelectItem>
+                                    <SelectItem value="admin">Admin (highest)</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <p className="text-xs text-muted-foreground">
+                                  Users with this role or higher can view this page
+                                </p>
+                              </div>
+                            )}
+                          </div>
                         </div>
                         <div className="space-y-2">
                           <Label>Page Layout</Label>

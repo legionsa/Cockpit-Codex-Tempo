@@ -1,9 +1,11 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { db } from '@/lib/indexedDB';
 import { hashPassword, verifyPassword, createSession, isSessionValid } from '@/lib/crypto';
+import { User } from '@/types/page';
 
 interface AuthContextType {
   isAuthenticated: boolean;
+  user: User | null;
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
 }
@@ -12,6 +14,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   // Check session on mount
@@ -23,15 +26,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const session = await db.getSetting('current_session');
       if (session && isSessionValid(session)) {
-        setIsAuthenticated(true);
+        // Load user data
+        const username = await db.getSetting<string>('admin_username');
+        const email = await db.getSetting<string>('admin_email') || '';
+        const role = await db.getSetting<'admin' | 'editor' | 'viewer'>('admin_role') || 'admin';
+
+        if (username) {
+          setUser({
+            username,
+            email,
+            role,
+            passwordHash: '' // Don't expose hash
+          });
+          setIsAuthenticated(true);
+        } else {
+          setIsAuthenticated(false);
+        }
       } else {
         // Clear expired session
         await db.deleteSetting('current_session');
         setIsAuthenticated(false);
+        setUser(null);
       }
     } catch (error) {
       console.error('Session check error:', error);
       setIsAuthenticated(false);
+      setUser(null);
     } finally {
       setIsLoading(false);
     }
@@ -49,10 +69,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const hash = await hashPassword(password);
         await db.setSetting('admin_username', username);
         await db.setSetting('admin_password_hash', hash);
+        await db.setSetting('admin_role', 'admin'); // Set default role
 
         // Create session
         const session = createSession(username, 24); // 24h expiry
         await db.setSetting('current_session', session);
+
+        // Set user object
+        const email = await db.getSetting<string>('admin_email') || '';
+        setUser({
+          username,
+          email,
+          role: 'admin',
+          passwordHash: ''
+        });
         setIsAuthenticated(true);
         return true;
       }
@@ -65,6 +95,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Create new session
         const session = createSession(username, 24); // 24h expiry
         await db.setSetting('current_session', session);
+
+        // Load user data
+        const email = await db.getSetting<string>('admin_email') || '';
+        const role = await db.getSetting<'admin' | 'editor' | 'viewer'>('admin_role') || 'admin';
+        setUser({
+          username,
+          email,
+          role,
+          passwordHash: ''
+        });
         setIsAuthenticated(true);
         return true;
       }
@@ -80,6 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await db.deleteSetting('current_session');
       setIsAuthenticated(false);
+      setUser(null);
     } catch (error) {
       console.error('Logout error:', error);
     }
@@ -91,7 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ isAuthenticated, login, logout }}>
+    <AuthContext.Provider value={{ isAuthenticated, user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

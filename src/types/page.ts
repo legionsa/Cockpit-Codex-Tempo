@@ -69,7 +69,13 @@ export interface Page {
   version: string;
   lastUpdated: string;
   password?: string; // Legacy - plain text (deprecated)
-  passwordHash?: string; // New - PBKDF2 hashed password
+  passwordHash?: string; // PBKDF2 or bcrypt hashed password
+  passwordProtected?: boolean; // Whether page requires password
+  passwordHint?: string; // Optional hint for password
+
+  // Role-based access control
+  visibility?: 'public' | 'authenticated' | 'role-restricted'; // Default: 'public'
+  requiredRole?: 'admin' | 'editor' | 'viewer'; // Required role if visibility is 'role-restricted'
 }
 
 export interface PageTag {
@@ -99,5 +105,5 @@ export interface User {
   username: string;
   passwordHash: string;
   email: string;
-  role: 'admin' | 'editor';
+  role: 'admin' | 'editor' | 'viewer'; // Extended with viewer role
 }
