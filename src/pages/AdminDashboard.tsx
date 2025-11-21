@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useSettings } from '@/lib/settingsContext';
 import { storage } from '@/lib/storage';
 import { Page, PageTreeNode } from '@/types/page';
 import { Button } from '@/components/ui/button';
@@ -34,6 +35,7 @@ export function AdminDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const { settings } = useSettings();
   const [pages, setPages] = useState<Page[]>([]);
   const [selectedPage, setSelectedPage] = useState<Page | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -48,6 +50,11 @@ export function AdminDashboard() {
     }
     loadPages();
   }, [isAuthenticated, navigate]);
+
+  useEffect(() => {
+    console.log('[AdminDashboard] Settings loaded:', settings);
+    console.log('[AdminDashboard] Brand icon SVG length:', settings.brandIconSvg?.length || 0);
+  }, [settings]);
 
   useEffect(() => {
     if (location.state?.pageId) {
@@ -86,7 +93,7 @@ export function AdminDashboard() {
     const newPage: Page = {
       id: Date.now().toString(),
       title: 'New Page',
-      slug: `page-${Date.now()}`,
+      slug: `page - ${Date.now()} `,
       parentId,
       order: Date.now(),
       tags: [],
@@ -201,7 +208,16 @@ export function AdminDashboard() {
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+          <div className="flex items-center gap-3">
+            {settings.brandIconSvg && (
+              <div
+                className="w-6 h-6 flex-shrink-0 [&>svg]:w-full [&>svg]:h-full [&>svg]:block"
+                style={{ width: '24px', height: '24px' }}
+                dangerouslySetInnerHTML={{ __html: settings.brandIconSvg }}
+              />
+            )}
+            <h1 className="text-2xl font-bold">{settings.dashboardTitle || 'Admin Dashboard'}</h1>
+          </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={handlePreview} disabled={!selectedPage}>
               <Eye className="w-4 h-4 mr-2" />

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { storage } from '@/lib/storage';
+import { useSettings } from '@/lib/settingsContext';
 import { NavTree } from '@/components/NavTree';
 import { Search } from '@/components/Search';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -13,9 +14,17 @@ interface DocsLayoutProps {
 }
 
 export function DocsLayout({ children }: DocsLayoutProps) {
+  const { settings } = useSettings();
   const [searchOpen, setSearchOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pageTree = storage.buildPageTree();
+
+  // Debug logging
+  React.useEffect(() => {
+    console.log('[DocsLayout] Settings loaded:', settings);
+    console.log('[DocsLayout] Brand icon SVG length:', settings.brandIconSvg?.length || 0);
+    console.log('[DocsLayout] Brand icon SVG:', settings.brandIconSvg);
+  }, [settings]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -30,8 +39,15 @@ export function DocsLayout({ children }: DocsLayoutProps) {
             </SheetTrigger>
             <SheetContent side="left" className="w-80 p-0">
               <div className="p-6">
-                <Link to="/home" className="font-bold text-xl" onClick={() => setSidebarOpen(false)}>
-                  Cockpit DS
+                <Link to="/home" className="flex items-center gap-3 font-bold text-xl" onClick={() => setSidebarOpen(false)}>
+                  {settings.brandIconSvg && (
+                    <div
+                      className="w-6 h-6 flex-shrink-0 [&>svg]:w-full [&>svg]:h-full [&>svg]:block"
+                      style={{ width: '24px', height: '24px' }}
+                      dangerouslySetInnerHTML={{ __html: settings.brandIconSvg }}
+                    />
+                  )}
+                  {settings.siteName || 'Cockpit DS'}
                 </Link>
               </div>
               <div className="px-4 pb-4">
@@ -40,8 +56,15 @@ export function DocsLayout({ children }: DocsLayoutProps) {
             </SheetContent>
           </Sheet>
 
-          <Link to="/home" className="font-bold text-xl mr-6">
-            Cockpit Design System
+          <Link to="/home" className="flex items-center gap-3 font-bold text-xl mr-6">
+            {settings.brandIconSvg && (
+              <div
+                className="w-6 h-6 flex-shrink-0 [&>svg]:w-full [&>svg]:h-full [&>svg]:block"
+                style={{ width: '24px', height: '24px' }}
+                dangerouslySetInnerHTML={{ __html: settings.brandIconSvg }}
+              />
+            )}
+            {settings.siteName || 'Cockpit Design System'}
           </Link>
 
           <div className="flex-1" />

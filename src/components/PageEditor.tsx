@@ -110,7 +110,7 @@ export function PageEditor({ content, onChange, readOnly = false }: PageEditorPr
             },
             delimiter: Delimiter,
             table: {
-              class: Table,
+              class: Table as any,
               inlineToolbar: true,
               config: {
                 rows: 2,

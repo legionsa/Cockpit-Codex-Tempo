@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSettings } from '@/lib/settingsContext';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { sanitizeSvg, validateSvgSize, readFileAsText } from '@/lib/svgSanitizer';
-import { Upload, ImageIcon } from 'lucide-react';
+import { Upload, ImageIcon, Trash2, RotateCcw } from 'lucide-react';
 
 export function BrandingSettings() {
     const { settings, updateSettings } = useSettings();
@@ -15,12 +15,22 @@ export function BrandingSettings() {
     const [faviconPreview, setFaviconPreview] = useState(settings.faviconSvg);
     const [isSaving, setIsSaving] = useState(false);
 
+    // Sync state with settings when they change (e.g., after loading from IndexedDB)
+    useEffect(() => {
+        setSiteName(settings.siteName);
+        setDashboardTitle(settings.dashboardTitle);
+        setBrandIconPreview(settings.brandIconSvg);
+        setFaviconPreview(settings.faviconSvg);
+    }, [settings]);
+
     async function handleSvgUpload(
         file: File,
         type: 'brandIcon' | 'favicon'
     ) {
         try {
+            console.log(`[BrandingSettings] Starting SVG upload for ${type}:`, file.name);
             const text = await readFileAsText(file);
+            console.log(`[BrandingSettings] SVG text read, length: ${text.length}`);
 
             // Validate
             if (!validateSvgSize(text, 50)) {
@@ -29,11 +39,15 @@ export function BrandingSettings() {
             }
 
             const sanitized = sanitizeSvg(text);
+            console.log(`[BrandingSettings] SVG sanitized, length: ${sanitized.length}`);
+            console.log(`[BrandingSettings] Sanitized SVG:`, sanitized);
 
             if (type === 'brandIcon') {
                 setBrandIconPreview(sanitized);
+                console.log('[BrandingSettings] Brand icon preview set');
             } else {
                 setFaviconPreview(sanitized);
+                console.log('[BrandingSettings] Favicon preview set');
             }
         } catch (error) {
             console.error('Error uploading SVG:', error);
@@ -44,12 +58,18 @@ export function BrandingSettings() {
     async function handleSave() {
         setIsSaving(true);
         try {
+            console.log('[BrandingSettings] Saving settings...');
+            console.log('[BrandingSettings] Brand icon length:', brandIconPreview.length);
+            console.log('[BrandingSettings] Favicon length:', faviconPreview.length);
+
             await updateSettings({
                 siteName,
                 dashboardTitle,
                 brandIconSvg: brandIconPreview,
                 faviconSvg: faviconPreview
             });
+
+            console.log('[BrandingSettings] Settings saved successfully');
             alert('✅ Branding settings saved!');
         } catch (error) {
             console.error('Error saving settings:', error);
@@ -111,15 +131,27 @@ export function BrandingSettings() {
                             </p>
                         </div>
                         {brandIconPreview ? (
-                            <div className="w-16 h-16 border rounded-lg flex items-center justify-center bg-muted">
-                                <div
-                                    className="w-12 h-12"
-                                    dangerouslySetInnerHTML={{ __html: brandIconPreview }}
-                                />
+                            <div className="flex flex-col gap-2 items-center">
+                                <div className="w-12 h-12 border rounded-lg flex items-center justify-center bg-muted p-1 overflow-hidden">
+                                    <div
+                                        className="w-8 h-8 flex items-center justify-center [&>svg]:w-full [&>svg]:h-full [&>svg]:object-contain"
+                                        style={{ maxWidth: '32px', maxHeight: '32px' }}
+                                        dangerouslySetInnerHTML={{ __html: brandIconPreview }}
+                                    />
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setBrandIconPreview('')}
+                                    className="text-xs"
+                                >
+                                    <RotateCcw className="w-3 h-3 mr-1" />
+                                    Restore Default
+                                </Button>
                             </div>
                         ) : (
-                            <div className="w-16 h-16 border rounded-lg flex items-center justify-center bg-muted text-muted-foreground">
-                                <ImageIcon className="w-6 h-6" />
+                            <div className="w-12 h-12 border rounded-lg flex items-center justify-center bg-muted text-muted-foreground">
+                                <ImageIcon className="w-5 h-5" />
                             </div>
                         )}
                     </div>
@@ -140,15 +172,27 @@ export function BrandingSettings() {
                             </p>
                         </div>
                         {faviconPreview ? (
-                            <div className="w-10 h-10 border rounded flex items-center justify-center bg-muted">
-                                <div
-                                    className="w-6 h-6"
-                                    dangerouslySetInnerHTML={{ __html: faviconPreview }}
-                                />
+                            <div className="flex flex-col gap-2 items-center">
+                                <div className="w-12 h-12 border rounded-lg flex items-center justify-center bg-muted p-1 overflow-hidden">
+                                    <div
+                                        className="w-8 h-8 flex items-center justify-center [&>svg]:w-full [&>svg]:h-full [&>svg]:object-contain"
+                                        style={{ maxWidth: '32px', maxHeight: '32px' }}
+                                        dangerouslySetInnerHTML={{ __html: faviconPreview }}
+                                    />
+                                </div>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setFaviconPreview('')}
+                                    className="text-xs"
+                                >
+                                    <RotateCcw className="w-3 h-3 mr-1" />
+                                    Restore Default
+                                </Button>
                             </div>
                         ) : (
-                            <div className="w-10 h-10 border rounded flex items-center justify-center bg-muted text-muted-foreground">
-                                <ImageIcon className="w-4 h-4" />
+                            <div className="w-12 h-12 border rounded-lg flex items-center justify-center bg-muted text-muted-foreground">
+                                <ImageIcon className="w-5 h-5" />
                             </div>
                         )}
                     </div>

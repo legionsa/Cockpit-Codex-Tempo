@@ -13,14 +13,14 @@ export function sanitizeSvg(svgString: string): string {
             'radialGradient', 'stop', 'use', 'symbol', 'title', 'desc'
         ],
         ALLOWED_ATTR: [
-            'width', 'height', 'viewBox', 'fill', 'stroke', 'stroke-width',
+            'viewBox', 'fill', 'stroke', 'stroke-width',
             'stroke-linecap', 'stroke-linejoin', 'd', 'cx', 'cy', 'r', 'rx', 'ry',
             'x', 'y', 'x1', 'y1', 'x2', 'y2', 'points', 'transform', 'id',
             'class', 'opacity', 'fill-opacity', 'stroke-opacity', 'offset',
             'stop-color', 'stop-opacity', 'xlink:href', 'href'
         ],
         FORBID_TAGS: ['script', 'foreignObject', 'iframe', 'object', 'embed'],
-        FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover']
+        FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'width', 'height']
     });
 
     return sanitized;
