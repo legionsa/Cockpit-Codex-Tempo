@@ -1,18 +1,17 @@
-import bcrypt from 'bcryptjs';
+import { hashPassword as cryptoHash, verifyPassword as cryptoVerify } from './crypto';
 
 /**
- * Hash a password using bcrypt
+ * Hash a password using PBKDF2 (native Web Crypto API)
  */
 export async function hashPassword(password: string): Promise<string> {
-    const salt = await bcrypt.genSalt(10);
-    return bcrypt.hash(password, salt);
+    return cryptoHash(password);
 }
 
 /**
- * Verify a password against a bcrypt hash
+ * Verify a password against a PBKDF2 hash
  */
 export async function verifyPassword(password: string, hash: string): Promise<boolean> {
-    return bcrypt.compare(password, hash);
+    return cryptoVerify(password, hash);
 }
 
 /**

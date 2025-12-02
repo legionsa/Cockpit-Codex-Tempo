@@ -16,7 +16,7 @@ export default class GalleryBlock {
     private api: any;
     private data: { items: any[]; columns?: number };
     private wrapper: HTMLElement | undefined;
-    private root: any;
+    private root: ReactDOM.Root | undefined;
 
     constructor({ data, api }: any) {
         this.api = api;
@@ -50,6 +50,14 @@ export default class GalleryBlock {
 
     validate(savedData: any) {
         return savedData.items && Array.isArray(savedData.items);
+    }
+
+    destroy() {
+        if (this.root) {
+            this.root.unmount();
+            this.root = undefined;
+        }
+        this.wrapper = undefined;
     }
 
     static get isReadOnlySupported() {

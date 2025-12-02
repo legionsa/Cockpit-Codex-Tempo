@@ -10,6 +10,17 @@ export default class IconTool {
     return true;
   }
 
+  api: any;
+  block: any;
+  data: {
+    name: string;
+    category: string;
+    svg: string;
+    size: number;
+    color: string;
+  };
+  wrapper: HTMLElement | null;
+
   constructor({ data, api, block }: any) {
     this.api = api;
     this.block = block;

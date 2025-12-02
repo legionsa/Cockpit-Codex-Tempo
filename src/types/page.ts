@@ -48,6 +48,7 @@ export interface Page {
 
   // View mode: how content is displayed
   viewMode?: 'default' | 'tabbed';
+  contentType?: 'component' | 'page';
 
   // Content for default mode
   content: EditorJSContent;
