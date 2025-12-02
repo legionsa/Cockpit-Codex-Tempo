@@ -21,49 +21,92 @@ export default class ImageUrlTool {
     }
 
     render() {
-        const button = document.createElement('button');
-        button.type = 'button';
-        button.innerHTML = ImageUrlTool.toolbox.icon;
-        button.classList.add(this.api.styles.inlineToolButton);
-
-        // This tool doesn't render a block itself immediately. 
-        // It triggers the modal, which then inserts the actual Image block.
-        // However, Editor.js expects a render method for block tools.
-        // We'll return an empty wrapper that triggers the modal on mount/click.
-
-        // Actually, for a Block Tool, render() returns the UI of the block.
-        // But we want to open a modal when the user selects this tool from the toolbox.
-        // Editor.js doesn't have a direct "onSelect" for block tools that doesn't insert a block.
-        // So we'll let Editor.js insert this block, and in the render, we'll dispatch the event.
-        // If the user cancels, we should probably remove this block.
-
         const wrapper = document.createElement('div');
+        wrapper.classList.add('cdx-block');
 
-        // Dispatch event to open modal
-        setTimeout(() => {
-            console.log('Dispatching openImageUrlModal event');
-            const event = new CustomEvent('openImageUrlModal', {
-                detail: {
-                    callback: (url: string) => {
-                        console.log('Received URL from modal:', url);
-                        // When URL is confirmed, we replace this block with an actual Image block
-                        const currentBlockIndex = this.api.blocks.getCurrentBlockIndex();
-                        console.log('Current block index:', currentBlockIndex);
+        const container = document.createElement('div');
+        container.style.display = 'flex';
+        container.style.gap = '10px';
+        container.style.alignItems = 'center';
+        container.style.padding = '12px';
+        container.style.border = '1px solid #e2e8f0';
+        container.style.borderRadius = '8px';
+        container.style.background = '#ffffff';
+        container.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
 
-                        this.api.blocks.insert('imageUpload', { // We use the standard image tool (which we renamed to imageUpload but it handles both if configured, or we use the one configured for URL)
-                            // Wait, we split them. 'imageUpload' is file only. 
-                            // We need to insert a block that can render the image from URL.
-                            // The 'imageUpload' tool uses @editorjs/image. 
-                            // @editorjs/image supports 'url' in data.
-                            file: {
-                                url: url
-                            }
-                        }, {}, currentBlockIndex, true); // Replace current block
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.placeholder = 'Paste image URL here...';
+        input.style.flex = '1';
+        input.style.padding = '10px 14px';
+        input.style.borderRadius = '6px';
+        input.style.border = '1px solid #cbd5e1';
+        input.style.fontSize = '14px';
+        input.style.outline = 'none';
+        input.style.color = '#0f172a';
+        input.style.backgroundColor = '#f8fafc';
+
+        // Add focus style listener
+        input.onfocus = () => {
+            input.style.borderColor = '#0f172a';
+            input.style.backgroundColor = '#ffffff';
+        };
+        input.onblur = () => {
+            input.style.borderColor = '#cbd5e1';
+            input.style.backgroundColor = '#f8fafc';
+        };
+
+        const button = document.createElement('button');
+        button.innerText = 'Add Image';
+        button.type = 'button';
+        button.style.padding = '10px 20px';
+        button.style.borderRadius = '6px';
+        button.style.background = '#0f172a';
+        button.style.color = 'white';
+        button.style.fontSize = '14px';
+        button.style.fontWeight = '500';
+        button.style.cursor = 'pointer';
+        button.style.border = 'none';
+        button.style.transition = 'background 0.2s';
+
+        button.onmouseover = () => {
+            button.style.background = '#1e293b';
+        };
+        button.onmouseout = () => {
+            button.style.background = '#0f172a';
+        };
+
+        const submitUrl = () => {
+            const url = input.value.trim();
+            if (url) {
+                const currentBlockIndex = this.api.blocks.getCurrentBlockIndex();
+
+                // Insert the image block
+                this.api.blocks.insert('imageUpload', {
+                    file: {
+                        url: url
                     }
-                }
-            });
-            window.dispatchEvent(event);
-        }, 0);
+                }, {}, currentBlockIndex, true);
+            }
+        };
+
+        button.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            submitUrl();
+        };
+
+        input.onkeydown = (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                e.stopPropagation();
+                submitUrl();
+            }
+        };
+
+        container.appendChild(input);
+        container.appendChild(button);
+        wrapper.appendChild(container);
 
         return wrapper;
     }

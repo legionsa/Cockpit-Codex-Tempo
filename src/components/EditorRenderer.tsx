@@ -97,6 +97,12 @@ export function EditorRenderer({ blocks }: EditorRendererProps) {
         );
 
       case 'image':
+      case 'imageUpload': // Handle imageUpload blocks same as image
+      case 'imageUrl': // Handle imageUrl blocks same as image
+        // If it's an imageUrl block without a file/url (e.g. just the placeholder button), don't render anything
+        if (block.type === 'imageUrl' && !block.data.file?.url && !block.data.url) {
+          return null;
+        }
         return (
           <figure key={index} className="my-6">
             <img
