@@ -1,4 +1,4 @@
-import { Page, PageTreeNode } from '@/types/page';
+import { Page, PageTreeNode, PageLayout, LayoutConfig } from '@/types/page';
 
 // Mock data storage - in production this would be replaced with actual backend
 const STORAGE_KEYS = {
@@ -14,30 +14,60 @@ const STORAGE_KEYS = {
 const INITIAL_PAGES: Page[] = [
   {
     id: 'home',
-    title: 'Home',
+    title: 'Cockpit Design System',
     slug: 'home',
     parentId: null,
     order: 0,
     tags: ['home'],
-    summary: 'Welcome to Cockpit Design System',
+    summary: 'A comprehensive design system for building consistent, accessible user interfaces.',
     contentType: 'editorjs',
     content: {
       time: Date.now(),
-      blocks: [
-        {
-          type: 'header',
-          data: { text: 'Cockpit Design System', level: 1 }
-        },
-        {
-          type: 'paragraph',
-          data: { text: 'A comprehensive design system for building consistent, accessible user interfaces.' }
-        }
-      ],
+      blocks: [],
       version: '2.29.0'
     },
     status: 'Published',
     version: '1.0.0',
-    lastUpdated: new Date().toISOString()
+    lastUpdated: new Date().toISOString(),
+    layout: 'landing',
+    layoutConfig: {
+      showBreadcrumbs: false,
+      showTitle: false,
+      hero: {
+        title: 'Cockpit Design System',
+        subtitle: 'A comprehensive design system for building consistent, accessible user interfaces. Start building beautiful products faster.',
+        ctaText: 'Get Started',
+        ctaLink: '/foundations',
+        secondaryCtaText: 'View Components',
+        secondaryCtaLink: '/components'
+      },
+      cards: [
+        {
+          title: 'Foundations',
+          description: 'Core design principles, color systems, typography, and spacing guidelines',
+          icon: 'palette',
+          link: '/foundations'
+        },
+        {
+          title: 'Components',
+          description: 'Reusable UI components built with React and Tailwind CSS',
+          icon: 'layers',
+          link: '/components'
+        },
+        {
+          title: 'Patterns',
+          description: 'Common UI patterns and best practices for your applications',
+          icon: 'layout',
+          link: '/patterns'
+        },
+        {
+          title: 'Resources',
+          description: 'Design files, code examples, and developer tools',
+          icon: 'code',
+          link: '/resources'
+        }
+      ]
+    }
   },
   {
     id: 'foundations',
@@ -135,6 +165,11 @@ export const storage = {
 
   setPages(pages: Page[]): void {
     localStorage.setItem(STORAGE_KEYS.PAGES, JSON.stringify(pages));
+  },
+
+  resetToDefaults(): void {
+    localStorage.removeItem(STORAGE_KEYS.PAGES);
+    this.setPages(INITIAL_PAGES);
   },
 
   getPageById(id: string): Page | undefined {
@@ -259,6 +294,10 @@ export const storage = {
       favicon: '',
       themeMode: 'system'
     };
+  },
+
+  getSiteConfig() {
+    return this.getConfig();
   },
 
   setConfig(config: any): void {

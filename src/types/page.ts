@@ -10,6 +10,45 @@ export interface EditorJSContent {
   version: string;
 }
 
+export type PageLayout = 
+  | 'default'           // Standard doc page with sidebar
+  | 'full-width'        // Full width content, no sidebar
+  | 'landing'           // Hero section + card grid (like Atlassian home)
+  | 'component'         // Component showcase with examples
+  | 'article'           // Blog/article style with narrow content
+  | 'grid'              // Card grid layout for category pages
+
+export interface HeroConfig {
+  title?: string;
+  subtitle?: string;
+  backgroundImage?: string;
+  backgroundColor?: string;
+  textColor?: 'light' | 'dark';
+  ctaText?: string;
+  ctaLink?: string;
+  secondaryCtaText?: string;
+  secondaryCtaLink?: string;
+}
+
+export interface CardItem {
+  title: string;
+  description: string;
+  icon?: string;
+  link: string;
+  image?: string;
+}
+
+export interface LayoutConfig {
+  showBreadcrumbs?: boolean;
+  showOnThisPage?: boolean;
+  showTitle?: boolean;
+  showSummary?: boolean;
+  maxWidth?: 'narrow' | 'default' | 'wide' | 'full';
+  hero?: HeroConfig;
+  cards?: CardItem[];
+  sidebarPosition?: 'left' | 'right' | 'none';
+}
+
 export interface Page {
   id: string;
   title: string;
@@ -23,7 +62,10 @@ export interface Page {
   status: 'Draft' | 'Published' | 'Archived';
   version: string;
   lastUpdated: string;
-  password?: string; // Optional password protection
+  password?: string;
+  layout?: PageLayout;
+  layoutConfig?: LayoutConfig;
+  icon?: string; // Icon for navigation/cards
 }
 
 export interface PageTreeNode extends Page {

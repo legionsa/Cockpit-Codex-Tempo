@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LogOut, Plus, Save, Trash2, Eye, FolderPlus } from 'lucide-react';
 import { NavTree } from '@/components/NavTree';
 import { PageEditor } from '@/components/PageEditor';
+import { LayoutEditor } from '@/components/LayoutEditor';
 import { useToast } from '@/components/ui/use-toast';
 import { useLocation } from 'react-router-dom';
 import {
@@ -168,7 +169,10 @@ export function AdminDashboard() {
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card">
         <div className="container mx-auto px-6 py-4 flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+          <div className="flex items-center gap-4">
+            <h1 className="text-2xl font-bold">Admin Dashboard</h1>
+            <span className="text-sm text-muted-foreground">Manage your documentation</span>
+          </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={handlePreview} disabled={!selectedPage}>
               <Eye className="h-4 w-4 mr-2" />
@@ -248,6 +252,7 @@ export function AdminDashboard() {
                   <Tabs defaultValue="content" className="w-full">
                     <TabsList>
                       <TabsTrigger value="content">Content</TabsTrigger>
+                      <TabsTrigger value="layout">Layout</TabsTrigger>
                       <TabsTrigger value="settings">Settings</TabsTrigger>
                     </TabsList>
                     
@@ -259,6 +264,14 @@ export function AdminDashboard() {
                         content={selectedPage.content}
                         onChange={(content) => setSelectedPage({ ...selectedPage, content })}
                         readOnly={!isEditing}
+                      />
+                    </TabsContent>
+
+                    <TabsContent value="layout" className="mt-4">
+                      <LayoutEditor
+                        page={selectedPage}
+                        onChange={(updates) => setSelectedPage({ ...selectedPage, ...updates })}
+                        disabled={!isEditing}
                       />
                     </TabsContent>
                     

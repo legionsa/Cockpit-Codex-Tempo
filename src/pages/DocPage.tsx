@@ -1,21 +1,16 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { useParams, Navigate, useNavigate, Link } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import { storage } from '@/lib/storage';
 import { useAuth } from '@/contexts/AuthContext';
-import { EditorRenderer } from '@/components/EditorRenderer';
-import { Breadcrumbs } from '@/components/Breadcrumbs';
 import { PasswordPrompt } from '@/components/PasswordPrompt';
-import { Button } from '@/components/ui/button';
-import { Edit } from 'lucide-react';
-import { OnThisPage } from '@/components/OnThisPage';
+import { Breadcrumbs } from '@/components/Breadcrumbs';
+import { PageLayoutRenderer } from '@/components/layouts/PageLayoutRenderer';
 
 export function DocPage() {
   const params = useParams();
-  const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
   const slugPath = params['*']?.split('/').filter(Boolean) || ['home'];
   const [isUnlocked, setIsUnlocked] = useState(false);
-  const contentRef = useRef<HTMLDivElement>(null);
 
   const page = storage.getPageBySlugPath(slugPath);
   
@@ -39,10 +34,6 @@ export function DocPage() {
     document.title = `${page.title} - Cockpit Design System`;
   }, [page.title]);
 
-  const handleEdit = () => {
-    navigate('/admindash', { state: { pageId: page.id } });
-  };
-
   if (!canView) {
     return (
       <>
@@ -62,30 +53,5 @@ export function DocPage() {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-[1400px] mx-auto px-6 py-8">
-        <Breadcrumbs pages={breadcrumbs} />
-        
-        <div className="mb-6">
-          <h1 className="text-4xl font-bold mb-2">{page.title}</h1>
-          {page.summary && (
-            <p className="text-lg text-muted-foreground">{page.summary}</p>
-          )}
-        </div>
-
-        <div className="flex gap-6">
-          {/* Main content area */}
-          <div className="flex-1 min-w-0" ref={contentRef}>
-            <div className="prose prose-slate dark:prose-invert max-w-none">
-              <EditorRenderer blocks={page.content.blocks} />
-            </div>
-          </div>
-
-          {/* Right sidebar - On this page navigation */}
-          <OnThisPage contentRef={contentRef} />
-        </div>
-      </div>
-    </div>
-  );
+  return <PageLayoutRenderer page={page} breadcrumbs={breadcrumbs} />;
 }
