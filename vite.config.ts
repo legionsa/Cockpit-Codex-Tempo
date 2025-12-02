@@ -20,5 +20,16 @@ export default defineConfig({
   server: {
     // @ts-ignore
     allowedHosts: true,
-  }
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-ui': ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-popover', '@radix-ui/react-select', '@radix-ui/react-tabs', 'lucide-react', 'framer-motion'],
+          'vendor-editor': ['@editorjs/editorjs', '@editorjs/header', '@editorjs/list', '@editorjs/paragraph', '@editorjs/image', '@editorjs/code', '@editorjs/raw', '@editorjs/quote', '@editorjs/table', '@editorjs/delimiter', '@editorjs/checklist', '@editorjs/warning', '@editorjs/embed'],
+        },
+      },
+    },
+  },
 });

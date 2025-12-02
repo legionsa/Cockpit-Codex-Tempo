@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { PropsTable } from '@/components/component-docs/PropsTable';
 import { ComponentPreview } from '@/components/component-docs/ComponentPreview';
 import { IconGalleryTabs } from '@/components/icon-explorer/IconGalleryTabs';
+import { CopyButton } from '@/components/CopyButton';
 import Prism from 'prismjs';
 import 'prismjs/themes/prism-tomorrow.css';
 import 'prismjs/components/prism-javascript';
@@ -114,7 +115,10 @@ export function EditorRenderer({ blocks }: EditorRendererProps) {
       case 'code':
         const language = detectLanguage(block.data.code);
         return (
-          <div key={index} className="my-4">
+          <div key={index} className="my-4 relative group">
+            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <CopyButton text={block.data.code} className="text-gray-400 hover:text-white" />
+            </div>
             <pre className="bg-[#2d2d2d] p-4 rounded-lg overflow-x-auto">
               <code className={`language-${language}`}>{block.data.code}</code>
             </pre>
@@ -274,6 +278,60 @@ export function EditorRenderer({ blocks }: EditorRendererProps) {
               allowFullScreen
             />
           </div>
+        );
+
+      case 'pageLink':
+        const { style = 'horizontal', title, summary, slug } = block.data;
+        // Construct the path based on slug - assuming flat structure or need full path lookup
+        // For now, we'll link to /docs/{slug} or just /{slug} depending on routing
+        // The storage.getBreadcrumbs logic suggests paths are built from slugs
+        const linkPath = `/${slug}`;
+
+        if (style === 'vertical') {
+          return (
+            <a href={linkPath} key={index} className="block my-6 no-underline group">
+              <div className="border border-border rounded-lg overflow-hidden bg-card hover:border-primary transition-colors">
+                <div className="h-40 bg-muted flex items-center justify-center text-muted-foreground">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg>
+                </div>
+                <div className="p-4">
+                  <div className="font-semibold text-lg text-foreground mb-1 group-hover:text-primary transition-colors">{title}</div>
+                  <div className="text-sm text-muted-foreground line-clamp-2">{summary || 'No description'}</div>
+                </div>
+              </div>
+            </a>
+          );
+        }
+
+        if (style === 'horizontal') {
+          return (
+            <a href={linkPath} key={index} className="block my-4 no-underline group">
+              <div className="flex h-[100px] border border-border rounded-lg overflow-hidden bg-card hover:border-primary transition-colors">
+                <div className="w-[100px] bg-muted flex items-center justify-center text-muted-foreground shrink-0 border-r border-border">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1"><rect x="3" y="3" width="18" height="18" rx="2" ry="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg>
+                </div>
+                <div className="p-4 flex-1 min-w-0 flex flex-col justify-center">
+                  <div className="font-semibold text-base text-foreground mb-1 group-hover:text-primary transition-colors">{title}</div>
+                  <div className="text-sm text-muted-foreground truncate">{summary || 'No description'}</div>
+                </div>
+              </div>
+            </a>
+          );
+        }
+
+        // Minimal style
+        return (
+          <a href={linkPath} key={index} className="block my-2 no-underline group">
+            <div className="flex items-center gap-3 p-3 border border-border rounded-lg bg-card hover:bg-accent/50 hover:border-primary transition-colors">
+              <div className="flex items-center justify-center w-6 h-6 text-muted-foreground">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="font-medium text-sm text-foreground group-hover:text-primary transition-colors">{title}</div>
+                <div className="text-xs text-muted-foreground">/{slug}</div>
+              </div>
+            </div>
+          </a>
         );
 
       default:

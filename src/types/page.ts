@@ -45,6 +45,7 @@ export interface Page {
   tags: string[];
   pageTags?: string[]; // For status tags like Beta, Deprecated
   summary: string;
+  icon?: string; // Lucide icon name
 
   // View mode: how content is displayed
   viewMode?: 'default' | 'tabbed';
@@ -57,7 +58,42 @@ export interface Page {
   tabs?: PageTab[];
 
   // Legacy fields (deprecated, will be removed)
-  layout?: 'default' | 'tab' | 'iconGallery';
+  // Layout configuration
+  // Layout configuration
+  layout?: 'default' | 'atlassian' | 'landing' | 'cardGrid' | 'fullWidth' | 'article' | 'component' | 'iconGallery';
+
+  // Display options for granular control
+  displayOptions?: {
+    showBreadcrumbs: boolean;
+    showTitle: boolean;
+    showSummary: boolean;
+    showOnThisPage: boolean;
+    contentWidth: 'default' | 'wide' | 'full';
+  };
+
+  hero?: {
+    title?: string;
+    subtitle?: string;
+    backgroundImage?: string;
+    backgroundColor?: string;
+    textColor?: 'light' | 'dark';
+    primaryCta?: { text: string; link: string };
+    secondaryCta?: { text: string; link: string };
+  };
+
+  navigationCards?: {
+    title: string;
+    description: string;
+    link: string;
+    icon?: string;
+  }[];
+
+  seo?: {
+    metaTitle?: string;
+    metaDescription?: string;
+    ogImage?: string;
+  };
+
   icons?: any[];
   componentData?: {
     props?: PropDefinition[];
@@ -107,4 +143,16 @@ export interface User {
   passwordHash: string;
   email: string;
   role: 'admin' | 'editor' | 'viewer'; // Extended with viewer role
+}
+
+export interface CustomIcon {
+  id: string;
+  name: string;
+  svg: string;
+  tags: string[];
+  category: string;
+  reactCode?: string;
+  figmaLink?: string;
+  size?: number;
+  createdAt: number;
 }

@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { storage } from '@/lib/storage';
 import { useNavigate } from 'react-router-dom';
 import Fuse from 'fuse.js';
+import { cn } from '@/lib/utils';
 
 interface SearchProps {
   open: boolean;
@@ -16,6 +17,13 @@ export function Search({ open, onOpenChange }: SearchProps) {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<any[]>([]);
   const navigate = useNavigate();
+
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  // Reset selection when results change
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [results]);
 
   // Keyboard shortcut: Cmd+K or Ctrl+K
   useEffect(() => {
@@ -30,9 +38,24 @@ export function Search({ open, onOpenChange }: SearchProps) {
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [onOpenChange]);
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (results.length === 0) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev + 1) % results.length);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedIndex(prev => (prev - 1 + results.length) % results.length);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSelectResult(results[selectedIndex].item);
+    }
+  };
+
   const handleSearch = (searchQuery: string) => {
     setQuery(searchQuery);
-    
+
     if (!searchQuery.trim()) {
       setResults([]);
       return;
@@ -83,17 +106,21 @@ export function Search({ open, onOpenChange }: SearchProps) {
               placeholder="Search pages, components, and content..."
               value={query}
               onChange={(e) => handleSearch(e.target.value)}
+              onKeyDown={handleKeyDown}
               className="pl-9"
               autoFocus
             />
           </div>
           {results.length > 0 && (
             <div className="space-y-2 max-h-96 overflow-y-auto">
-              {results.map((result) => (
+              {results.map((result, index) => (
                 <button
                   key={result.item.id}
                   onClick={() => handleSelectResult(result.item)}
-                  className="w-full text-left p-3 rounded-lg hover:bg-accent transition-colors"
+                  className={cn(
+                    "w-full text-left p-3 rounded-lg transition-colors",
+                    index === selectedIndex ? "bg-accent" : "hover:bg-accent"
+                  )}
                 >
                   <div className="font-medium">{result.item.title}</div>
                   <div className="text-sm text-muted-foreground line-clamp-2">

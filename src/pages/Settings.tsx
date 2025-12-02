@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { Eye, LogOut, Settings as SettingsIcon, ArrowLeft, Paintbrush, Type, User } from 'lucide-react';
+import { Eye, LogOut, Settings as SettingsIcon, ArrowLeft, Paintbrush, Type, User, Database } from 'lucide-react';
 import { BrandingSettings } from '@/components/settings/BrandingSettings';
 import { TypographySettings } from '@/components/settings/TypographySettings';
 import { AccountSettings } from '@/components/settings/AccountSettings';
+import { BackupSettings } from '@/components/settings/BackupSettings';
 
-type SettingsTab = 'branding' | 'typography' | 'account';
+type SettingsTab = 'branding' | 'typography' | 'account' | 'backup';
 
 export function Settings() {
     const navigate = useNavigate();
@@ -91,6 +92,15 @@ export function Settings() {
                                     <User className="w-4 h-4 mr-2" />
                                     Account
                                 </Button>
+
+                                <Button
+                                    variant={activeTab === 'backup' ? 'secondary' : 'ghost'}
+                                    className="w-full justify-start"
+                                    onClick={() => setActiveTab('backup')}
+                                >
+                                    <Database className="w-4 h-4 mr-2" />
+                                    Backup & Restore
+                                </Button>
                             </div>
                         </div>
                     </div>
@@ -125,6 +135,12 @@ export function Settings() {
                                         Manage your admin credentials and security
                                     </p>
                                     <AccountSettings />
+                                </div>
+                            )}
+
+                            {activeTab === 'backup' && (
+                                <div>
+                                    <BackupSettings />
                                 </div>
                             )}
                         </div>

@@ -1,4 +1,4 @@
-import { Page, PageTreeNode } from '@/types/page';
+import { Page, PageTreeNode, CustomIcon } from '@/types/page';
 
 // Mock data storage - in production this would be replaced with actual backend
 const STORAGE_KEYS = {
@@ -9,7 +9,23 @@ const STORAGE_KEYS = {
   AUTH_TOKEN: 'cds_auth_token',
   AUTH_TOKEN_EXPIRY: 'cds_auth_token_expiry',
   TAGS: 'cds_tags',
+  CUSTOM_ICONS: 'cds_custom_icons',
+  BACKUPS: 'cds_backups',
 };
+
+export interface Backup {
+  id: string;
+  timestamp: number;
+  label: string;
+  data: {
+    pages: Page[];
+    redirects: any[];
+    config: any;
+    users: any[];
+    tags: any[];
+    customIcons: CustomIcon[];
+  };
+}
 
 const INITIAL_TAGS = [
   { label: "Beta", color: "#4f46e5", description: "Still experimental" },
@@ -492,5 +508,115 @@ export const storage = {
   deleteTag(label: string): void {
     const tags = this.getTags().filter((t: any) => t.label !== label);
     this.setTags(tags);
+  },
+
+  // Custom Icons
+  getCustomIcons(): CustomIcon[] {
+    const stored = localStorage.getItem(STORAGE_KEYS.CUSTOM_ICONS);
+    return stored ? JSON.parse(stored) : [];
+  },
+
+  setCustomIcons(icons: CustomIcon[]): void {
+    localStorage.setItem(STORAGE_KEYS.CUSTOM_ICONS, JSON.stringify(icons));
+  },
+
+  saveCustomIcon(icon: CustomIcon): void {
+    const icons = this.getCustomIcons();
+    const index = icons.findIndex(i => i.id === icon.id);
+    if (index >= 0) {
+      icons[index] = icon;
+    } else {
+      icons.push(icon);
+    }
+    this.setCustomIcons(icons);
+  },
+
+  deleteCustomIcon(id: string): void {
+    const icons = this.getCustomIcons().filter(i => i.id !== id);
+    this.setCustomIcons(icons);
+  },
+
+  // Backups
+  getBackups(): Backup[] {
+    const stored = localStorage.getItem(STORAGE_KEYS.BACKUPS);
+    return stored ? JSON.parse(stored) : [];
+  },
+
+  setBackups(backups: Backup[]): void {
+    localStorage.setItem(STORAGE_KEYS.BACKUPS, JSON.stringify(backups));
+  },
+
+  createBackup(label: string): Backup {
+    const backup: Backup = {
+      id: Date.now().toString(),
+      timestamp: Date.now(),
+      label,
+      data: {
+        pages: this.getPages(),
+        redirects: this.getRedirects(),
+        config: this.getConfig(),
+        users: this.getUsers(),
+        tags: this.getTags(),
+        customIcons: this.getCustomIcons()
+      }
+    };
+
+    const backups = this.getBackups();
+    // Keep only last 5 backups
+    if (backups.length >= 5) {
+      backups.pop(); // Remove oldest (assuming sorted new -> old)
+    }
+    backups.unshift(backup); // Add new to top
+    this.setBackups(backups);
+    return backup;
+  },
+
+  restoreBackup(id: string): void {
+    const backups = this.getBackups();
+    const backup = backups.find(b => b.id === id);
+    if (!backup) throw new Error('Backup not found');
+
+    this.setPages(backup.data.pages);
+    this.setRedirects(backup.data.redirects);
+    this.setConfig(backup.data.config);
+    this.setUsers(backup.data.users);
+    this.setTags(backup.data.tags);
+    this.setCustomIcons(backup.data.customIcons);
+  },
+
+  importBackup(json: string): void {
+    try {
+      const data = JSON.parse(json);
+      // Basic validation
+      if (!data.pages || !data.config) {
+        throw new Error('Invalid backup file');
+      }
+
+      // Create a backup entry for this import
+      const backup: Backup = {
+        id: Date.now().toString(),
+        timestamp: Date.now(),
+        label: `Imported: ${new Date().toLocaleString()}`,
+        data: data
+      };
+
+      const backups = this.getBackups();
+      if (backups.length >= 5) {
+        backups.pop();
+      }
+      backups.unshift(backup);
+      this.setBackups(backups);
+
+      // Auto-restore the imported data
+      this.restoreBackup(backup.id);
+    } catch (e) {
+      console.error('Import failed:', e);
+      throw e;
+    }
+  },
+
+  deleteBackup(id: string): void {
+    const backups = this.getBackups().filter(b => b.id !== id);
+    this.setBackups(backups);
   }
 };
