@@ -12,6 +12,7 @@ const DocPage = React.lazy(() => import('@/pages/DocPage').then(module => ({ def
 const LoginPage = React.lazy(() => import('@/pages/LoginPage').then(module => ({ default: module.LoginPage })));
 const AdminDashboard = React.lazy(() => import('@/pages/AdminDashboard').then(module => ({ default: module.AdminDashboard })));
 const Settings = React.lazy(() => import('@/pages/Settings').then(module => ({ default: module.Settings })));
+const IconLibraryPage = React.lazy(() => import('@/pages/admin/IconLibraryPage').then(module => ({ default: module.IconLibraryPage })));
 
 function LoadingFallback() {
   return (
@@ -36,6 +37,7 @@ function App() {
                 <Route path="/admindash/login" element={<LoginPage />} />
                 <Route path="/admindash" element={<AdminDashboard />} />
                 <Route path="/admindash/settings" element={<Settings />} />
+                <Route path="/admindash/icons" element={<IconLibraryPage />} />
 
                 {/* Public documentation routes */}
                 <Route path="/" element={<Navigate to="/home" replace />} />

@@ -35,6 +35,10 @@ export function Settings() {
                             <Eye className="w-4 h-4 mr-2" />
                             Preview
                         </Button>
+                        <Button variant="outline" size="sm" onClick={() => navigate('/admindash/icons')}>
+                            <Database className="w-4 h-4 mr-2" />
+                            Icons
+                        </Button>
                         <Button variant="outline" size="sm" onClick={() => navigate('/admindash/settings')}>
                             <SettingsIcon className="w-4 h-4 mr-2" />
                             Settings

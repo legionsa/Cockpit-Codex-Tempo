@@ -87,6 +87,12 @@ export default class ImageUrlTool {
                         url: url
                     }
                 }, {}, currentBlockIndex, true);
+
+                // Delete this tool's block (which has been pushed down by the insertion)
+                // We use setTimeout to ensure the insertion is complete and indices are updated
+                setTimeout(() => {
+                    this.api.blocks.delete(currentBlockIndex + 1);
+                }, 50);
             }
         };
 

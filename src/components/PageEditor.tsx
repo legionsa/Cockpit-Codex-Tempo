@@ -9,10 +9,11 @@ import Delimiter from '@editorjs/delimiter';
 import Table from '@editorjs/table';
 import Code from '@editorjs/code';
 import Embed from '@editorjs/embed';
-import Image from '@editorjs/image';
+import ImageTool from '@editorjs/image';
 // @ts-ignore
 import ImageUrlTool from './editor-tools/ImageUrlTool';
-import { ImageUrlModal } from './ImageUrlModal';
+// @ts-ignore
+import ImageUploadTool from './editor-tools/ImageUploadTool';
 // @ts-ignore
 import RawTool from '@editorjs/raw';
 import IconTool from './editor-tools/IconTool';
@@ -40,8 +41,7 @@ export function PageEditor({ content, onChange, readOnly = false }: PageEditorPr
   const [iconCallback, setIconCallback] = useState<((icon: any) => void) | null>(null);
   const [showPageSelector, setShowPageSelector] = useState(false);
   const [pageCallback, setPageCallback] = useState<((page: any) => void) | null>(null);
-  const [showImageUrlModal, setShowImageUrlModal] = useState(false);
-  const [imageUrlCallback, setImageUrlCallback] = useState<((url: string) => void) | null>(null);
+
 
   useEffect(() => {
     const handleOpenIconLibrary = (e: any) => {
@@ -54,20 +54,16 @@ export function PageEditor({ content, onChange, readOnly = false }: PageEditorPr
       setShowPageSelector(true);
     };
 
-    const handleOpenImageUrlModal = (e: any) => {
-      console.log('Event received: openImageUrlModal');
-      setImageUrlCallback(() => e.detail.callback);
-      setShowImageUrlModal(true);
-    };
+
 
     window.addEventListener('openIconLibrary', handleOpenIconLibrary);
     window.addEventListener('openPageSelector', handleOpenPageSelector);
-    window.addEventListener('openImageUrlModal', handleOpenImageUrlModal);
+
 
     return () => {
       window.removeEventListener('openIconLibrary', handleOpenIconLibrary);
       window.removeEventListener('openPageSelector', handleOpenPageSelector);
-      window.removeEventListener('openImageUrlModal', handleOpenImageUrlModal);
+
     };
   }, []);
 
@@ -182,8 +178,9 @@ export function PageEditor({ content, onChange, readOnly = false }: PageEditorPr
                 }
               }
             },
+            // The standard Image tool - used for rendering but hidden from toolbox
             imageUpload: {
-              class: Image,
+              class: ImageTool as any,
               config: {
                 uploader: {
                   uploadByFile(file: File) {
@@ -193,24 +190,26 @@ export function PageEditor({ content, onChange, readOnly = false }: PageEditorPr
                         resolve({
                           success: 1,
                           file: {
-                            url: e.target?.result as string
-                          }
+                            url: e.target?.result,
+                          },
                         });
                       };
                       reader.readAsDataURL(file);
                     });
-                  }
+                  },
                 },
-                buttonContent: 'Select image to upload',
-                types: 'image/*'
               },
-              toolbox: {
-                title: 'Upload Image',
-                icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>'
-              }
+              toolbox: false // Hide from toolbox
             },
+            // Custom tool for uploading images
+            uploadImage: {
+              class: ImageUploadTool,
+              inlineToolbar: true
+            },
+            // Custom tool for inserting images from URL
             imageUrl: {
               class: ImageUrlTool,
+              inlineToolbar: true,
               config: {
                 // No config needed for now, handled by modal
               }

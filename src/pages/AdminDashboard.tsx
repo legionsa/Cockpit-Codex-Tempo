@@ -301,6 +301,10 @@ export function AdminDashboard() {
               <Eye className="w-4 h-4 mr-2" />
               Preview
             </Button>
+            <Button variant="outline" size="sm" onClick={() => navigate('/admindash/icons')}>
+              <FolderPlus className="w-4 h-4 mr-2" />
+              Icons
+            </Button>
             <Button variant="outline" size="sm" onClick={() => navigate('/admindash/settings')}>
               <Settings className="w-4 h-4 mr-2" />
               Settings
